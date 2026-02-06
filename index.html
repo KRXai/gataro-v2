@@ -1,1 +1,125 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gataro AI - Smart Documents</title>
+    <style>
+        :root { --primary: #0066ff; --bg: #f5f7fa; --text: #1a1a1a; }
+        body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); margin: 0; display: flex; height: 100vh; color: var(--text); }
+        
+        /* Interfața de control (Stânga) - Stil SmartBill */
+        .sidebar { width: 380px; background: #fff; border-right: 1px solid #e1e8ed; padding: 40px 30px; display: flex; flex-direction: column; box-shadow: 2px 0 10px rgba(0,0,0,0.02); z-index: 10; }
+        .logo { font-size: 24px; font-weight: 900; letter-spacing: -1px; margin-bottom: 5px; }
+        .logo span { color: var(--primary); }
+        .tagline { font-size: 13px; color: #64748b; margin-bottom: 30px; font-weight: 500; }
 
+        .input-group { flex: 1; display: flex; flex-direction: column; gap: 15px; }
+        label { font-size: 14px; font-weight: 600; color: #475569; }
+        
+        .smart-area { width: 100%; flex: 1; border: 2px solid #f1f5f9; border-radius: 12px; padding: 15px; font-size: 15px; outline: none; transition: 0.2s; resize: none; background: #fdfdfd; line-height: 1.5; }
+        .smart-area:focus { border-color: var(--primary); background: #fff; box-shadow: 0 0 0 4px rgba(0, 102, 255, 0.05); }
+
+        .btn-main { background: #000; color: #fff; border: none; padding: 16px; border-radius: 10px; font-weight: 700; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 10px; }
+        .btn-main:hover { background: #222; transform: translateY(-1px); }
+        .btn-secondary { background: #fff; color: #000; border: 1px solid #e2e8f0; padding: 12px; border-radius: 10px; font-weight: 600; cursor: pointer; margin-top: 10px; }
+
+        /* Zona de Previzualizare (Dreapta) */
+        .preview-pane { flex: 1; overflow-y: auto; padding: 60px; display: flex; justify-content: center; align-items: flex-start; background: #525f7a; }
+        
+        /* Documentul Oficial ITL 054 */
+        .a4-page { background: white; width: 210mm; min-height: 297mm; padding: 15mm; box-shadow: 0 20px 50px rgba(0,0,0,0.2); box-sizing: border-box; font-size: 11px; line-height: 1.3; position: relative; }
+        .doc-header { display: flex; justify-content: space-between; border: 1px solid #000; padding: 5px; margin-bottom: 10px; }
+        .title { text-align: center; font-weight: bold; font-size: 13px; margin: 15px 0; text-transform: uppercase; }
+        .section-box { border: 1px solid #000; padding: 6px; margin-bottom: 8px; }
+        .section-label { font-weight: bold; text-transform: uppercase; font-size: 10px; display: block; margin-bottom: 3px; }
+        .data-fill { font-family: "Courier New", monospace; font-weight: bold; font-size: 12px; color: var(--primary); text-decoration: underline; }
+
+        @media print {
+            .sidebar { display: none; }
+            .preview-pane { background: none; padding: 0; }
+            .a4-page { box-shadow: none; margin: 0; width: 100%; border: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="logo">GATARO<span>.ai</span></div>
+        <div class="tagline">Asistentul tău pentru acte oficiale</div>
+        
+        <div class="input-group">
+            <label>Ce vrei să generezi?</label>
+            <textarea id="aiInput" class="smart-area" placeholder="Ex: Vând mașina Dacia Logan lui Popescu Ion cu suma de 15.000 lei. Seria șasiu este..."></textarea>
+            
+            <button class="btn-main" onclick="proceseazaText()">✨ GENEREAZĂ DOCUMENTUL</button>
+            
+            <div style="height: 1px; background: #e2e8f0; margin: 10px 0;"></div>
+            
+            <label>Încarcă poze (Buletin / Talon)</label>
+            <button class="btn-secondary">📷 FĂ O POZĂ / UPLOAD</button>
+            <button class="btn-secondary" onclick="window.print()">🖨️ PRINTEAZĂ ACUM</button>
+        </div>
+    </aside>
+
+    <main class="preview-pane">
+        <div class="a4-page" id="document">
+            <div class="doc-header">
+                <div style="width: 60%;">
+                    <b>A</b> Organul fiscal local de înstrăinare<br>
+                    CIF/Cod SIRUTA: .................................<br>
+                    Adresa: ............................................
+                </div>
+                <div style="text-align: right;">
+                    <b>Model 2016 ITL 054</b><br>
+                    Nr. ............ / ............ 20...
+                </div>
+            </div>
+
+            <div class="title">Contract de înstrăinare - dobândire a unui mijloc de transport</div>
+
+            <div class="section-box">
+                <span class="section-label">(1) PERSOANA CARE ÎNSTRĂINEAZĂ (VÂNZĂTOR)</span>
+                Subsemnatul/Subscrisa <span id="outVanzator" class="data-fill">COCO IONESCU</span>, domiciliat în ROMÂNIA, identificat prin C.I. seria ..., nr. ..., CNP <span id="outCnpV" class="data-fill">..........</span>.
+            </div>
+
+            <div class="section-box">
+                <span class="section-label">(2) PERSOANA CARE DOBÂNDEŞTE (CUMPĂRĂTOR)</span>
+                Subsemnatul/Subscrisa <span id="outCumparator" class="data-fill">........................</span>, domiciliat în ROMÂNIA, identificat prin C.I. seria ..., nr. ..., CNP <span id="outCnpC" class="data-fill">..........</span>.
+            </div>
+
+            <div class="section-box">
+                <span class="section-label">(3) OBIECTUL CONTRACTULUI</span>
+                Mijlocul de transport: marca <span id="outMarca" class="data-fill">..........</span>, tipul <span id="outTip" class="data-fill">..........</span>, nr. identificare (șasiu) <span id="outSasiu" class="data-fill">........................</span>, capacitate cil. <span id="outCil" class="data-fill">....</span> cmc, CIV <span id="outCiv" class="data-fill">..........</span>.
+            </div>
+
+            <div class="section-box" style="background: #fcfcfc;">
+                <span class="section-label">(4) PREŢUL</span>
+                În cifre: <span id="outPret" style="font-size: 14px; font-weight: bold;">__________</span> <b>LEI</b><br>
+                În litere: <i id="outPretLitere">....................................................................</i>
+            </div>
+
+            <div style="font-size: 9px; margin-top: 10px;">
+                (5) Persoana care înstrăinează declară că mijlocul de transport este proprietatea sa, nu este sechestrat și nu face obiectul vreunui litigiu...
+            </div>
+
+            <div style="display: flex; justify-content: space-around; margin-top: 50px; text-align: center; font-weight: bold;">
+                <div style="border-top: 1px solid #000; width: 150px; padding-top: 5px;">VÂNZĂTOR</div>
+                <div style="border-top: 1px solid #000; width: 150px; padding-top: 5px;">CUMPĂRĂTOR</div>
+            </div>
+
+            <div class="section-box" style="margin-top: 40px; border-style: dashed; min-height: 60px;">
+                <span class="section-label">C - Organul fiscal local al persoanei care dobândeşte</span>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        function proceseazaText() {
+            const val = document.getElementById('aiInput').value;
+            // Aici vom conecta mai tarziu OpenAI API
+            alert("Am primit datele! Acum urmează pasul de integrare cu 'Creierul AI'.");
+        }
+    </script>
+</body>
+</html>
